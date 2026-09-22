@@ -1,1 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Mentor de Carreiras - Tokens</title>
+
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --muted: #8b949e;
+            --primary: #58a6ff;
+            --success: #2ea44f;
+            --warning: #d29922;
+            --danger: #f85149;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+
+            font-family: Arial, sans-serif;
+
+            background: var(--bg);
+            color: var(--text);
+
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .descricao {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+
+            background: var(--bg);
+            color: var(--text);
+
+            border: 1px solid var(--border);
+            border-radius: 6px;
+
+            font-size: 15px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .campo {
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+
+            background: var(--primary);
+            color: white;
+
+            border: 0;
+            border-radius: 6px;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .resultado {
+            display: none;
+        }
+
+        .resposta {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 15px;
+
+            white-space: pre-wrap;
+            line-height: 1.6;
+
+            margin-top: 10px;
+        }
+
+        .tokens {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+
+            margin-top: 15px;
+        }
+
+        .token-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .token-box strong {
+            display: block;
+            font-size: 25px;
+            color: var(--primary);
+            margin-top: 5px;
+        }
+
+        .comparacao {
+            padding: 20px;
+            margin-top: 20px;
+
+            border-radius: 6px;
+            border: 1px solid var(--success);
+
+            background: rgba(46, 164, 79, 0.1);
+
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .erro {
+            color: var(--danger);
+            margin-top: 15px;
+            white-space: pre-wrap;
+        }
+
+        .aviso {
+            color: var(--warning);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 600px) {
+            .tokens {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🤖 Mentor de Carreiras</h1>
+
+    <p class="descricao">
+        Compare o consumo de tokens entre um prompt curto e um prompt detalhado.
+        Os dois testes utilizam o mesmo mentor.
+    </p>
+
+    <div class="card">
+
+        <div class="campo">
+            <label for="apiKey">
+                Chave da API do OpenRouter
+            </label>
+
+            <input
+                type="password"
+                id="apiKey"
+                placeholder="Cole sua chave aqui"
+                autocomplete="off"
+            >
+
+            <p class="aviso">
+                ⚠️ Não coloque sua chave diretamente no código.
+                Ela será utilizada apenas durante esta sessão.
+            </p>
+        </div>
+
+        <div class="campo">
+            <label for="promptCurto">
+                Prompt curto
+            </label>
+
+            <textarea id="promptCurto">Gosto de tecnologia. Que carreira combina comigo?</textarea>
+        </div>
+
+        <div class="campo">
+            <label for="promptDetalhado">
+                Prompt detalhado
+            </label>
+
+            <textarea id="promptDetalhado">Quero escolher uma carreira relacionada à tecnologia. Gosto muito de computadores, tenho interesse em programação e também gosto de resolver problemas e aprender coisas novas. Prefiro atividades que envolvam criatividade e raciocínio lógico. Não tenho experiência profissional na área ainda. Quais carreiras poderiam combinar com esse perfil? Explique por que cada uma delas combina comigo e dê uma breve descrição das atividades realizadas em cada profissão.</textarea>
+        </div>
+
+        <button id="executar">
+            ▶️ Executar os dois testes
+        </button>
+
+        <div id="erro" class="erro"></div>
+
+    </div>
+
+
+    <div id="resultado" class="resultado">
+
+        <div class="card">
+
+            <h2>📝 Teste 1 — Prompt curto</h2>
+
+            <div id="respostaCurta" class="resposta"></div>
+
+            <div class="tokens">
+
+                <div class="token-box">
+                    Entrada
+                    <strong id="entradaCurta">0</strong>
+                </div>
+
+                <div class="token-box">
+                    Saída
+                    <strong id="saidaCurta">0</strong>
+                </div>
+
+                <div class="token-box">
+                    Total
+                    <strong id="totalCurto">0</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>📚 Teste 2 — Prompt detalhado</h2>
+
+            <div id="respostaDetalhada" class="resposta"></div>
+
+            <div class="tokens">
+
+                <div class="token-box">
+                    Entrada
+                    <strong id="entradaDetalhada">0</strong>
+                </div>
+
+                <div class="token-box">
+                    Saída
+                    <strong id="saidaDetalhada">0</strong>
+                </div>
+
+                <div class="token-box">
+                    Total
+                    <strong id="totalDetalhado">0</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div id="comparacao" class="comparacao"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const executar = document.getElementById("executar");
+    const apiKey = document.getElementById("apiKey");
+
+    const promptCurto = document.getElementById("promptCurto");
+    const promptDetalhado = document.getElementById("promptDetalhado");
+
+    const resultado = document.getElementById("resultado");
+    const erro = document.getElementById("erro");
+
+
+    /*
+     * Instruções do nosso mentor.
+     */
+    const instructions = `
+        Você é um mentor de carreiras.
+
+        Ajude a pessoa usuária a descobrir possíveis carreiras
+        de acordo com seus interesses.
+
+        Sempre explique brevemente por que cada carreira sugerida
+        combina com os interesses informados.
+    `;
+
+
+    /*
+     * Função responsável por enviar uma solicitação
+     * para o OpenRouter.
+     */
+    async function consultarModelo(prompt) {
+
+        const response = await fetch(
+            "https://openrouter.ai/api/v1/responses",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey.value}`
+                },
+
+                body: JSON.stringify({
+                    model: "openai/gpt-oss-20b:free",
+
+                    instructions: instructions,
+
+                    input: prompt
+                })
+            }
+        );
+
+
+        if (!response.ok) {
+
+            const erroApi = await response.text();
+
+            throw new Error(
+                `Erro na API (${response.status}):\n${erroApi}`
+            );
+        }
+
+
+        return await response.json();
+    }
+
+
+    /*
+     * Executa os dois testes.
+     */
+    async function executarTestes() {
+
+        erro.textContent = "";
+
+        if (!apiKey.value.trim()) {
+
+            erro.textContent =
+                "Digite sua chave do OpenRouter.";
+
+            return;
+        }
+
+
+        executar.disabled = true;
+        executar.textContent = "⏳ Executando...";
+
+        resultado.style.display = "none";
+
+
+        try {
+
+            // =========================
+            // TESTE 1
+            // =========================
+
+            const respostaCurta =
+                await consultarModelo(
+                    promptCurto.value
+                );
+
+
+            document.getElementById(
+                "respostaCurta"
+            ).textContent =
+                respostaCurta.output_text || "Sem resposta.";
+
+
+            const usoCurto =
+                respostaCurta.usage;
+
+
+            document.getElementById(
+                "entradaCurta"
+            ).textContent =
+                usoCurto.input_tokens ?? 0;
+
+
+            document.getElementById(
+                "saidaCurta"
+            ).textContent =
+                usoCurto.output_tokens ?? 0;
+
+
+            document.getElementById(
+                "totalCurto"
+            ).textContent =
+                usoCurto.total_tokens ?? 0;
+
+
+            // =========================
+            // TESTE 2
+            // =========================
+
+            const respostaDetalhada =
+                await consultarModelo(
+                    promptDetalhado.value
+                );
+
+
+            document.getElementById(
+                "respostaDetalhada"
+            ).textContent =
+                respostaDetalhada.output_text ||
+                "Sem resposta.";
+
+
+            const usoDetalhado =
+                respostaDetalhada.usage;
+
+
+            document.getElementById(
+                "entradaDetalhada"
+            ).textContent =
+                usoDetalhado.input_tokens ?? 0;
+
+
+            document.getElementById(
+                "saidaDetalhada"
+            ).textContent =
+                usoDetalhado.output_tokens ?? 0;
+
+
+            document.getElementById(
+                "totalDetalhado"
+            ).textContent =
+                usoDetalhado.total_tokens ?? 0;
+
+
+            // =========================
+            // COMPARAÇÃO
+            // =========================
+
+            const totalCurto =
+                usoCurto.total_tokens ?? 0;
+
+            const totalDetalhado =
+                usoDetalhado.total_tokens ?? 0;
+
+
+            const comparacao =
+                document.getElementById(
+                    "comparacao"
+                );
+
+
+            if (totalCurto > totalDetalhado) {
+
+                comparacao.textContent =
+                    `📊 O prompt curto consumiu mais tokens: 
+                     ${totalCurto} contra 
+                     ${totalDetalhado}.`;
+
+            } else if (totalDetalhado > totalCurto) {
+
+                comparacao.textContent =
+                    `📊 O prompt detalhado consumiu mais tokens: 
+                     ${totalDetalhado} contra 
+                     ${totalCurto}.`;
+
+            } else {
+
+                comparacao.textContent =
+                    "📊 Os dois prompts consumiram a mesma quantidade de tokens.";
+            }
+
+
+            resultado.style.display = "block";
+
+
+        } catch (e) {
+
+            erro.textContent =
+                "Não foi possível realizar o teste.\n\n" +
+                e.message;
+
+        } finally {
+
+            executar.disabled = false;
+            executar.textContent =
+                "▶️ Executar os dois testes";
+        }
+    }
+
+
+    executar.addEventListener(
+        "click",
+        executarTestes
+    );
+
+</script>
+
+</body>
+</html>
 
